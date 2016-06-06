@@ -15,10 +15,11 @@ import org.omg.CORBA.portable.OutputStream;
 public class CSVgenerator extends JFrame {
 	List<DataSheet> dataList = new ArrayList<DataSheet>();
 	private JTextArea textArea;
+	private JTextArea textArea1;
 	private JButton buttonClear;
-
+	private JPanel panel = new JPanel();
 	private JTextField fieldMessage;
-	private JButton buttonSubmit;
+	// private JButton buttonSubmit;
 
 	private JButton generateButton;
 
@@ -29,31 +30,30 @@ public class CSVgenerator extends JFrame {
 		setSize(400, 300);
 		setLocationRelativeTo(null);
 		setResizable(false);
+
 	}
 
 	public void createView() {
-		JPanel panel = new JPanel();
+
 		getContentPane().add(panel);
 
-		JLabel label = new JLabel("Enter Quote (eg. THB/USD)");
+		JLabel label = new JLabel("Enter Tick Size (0.000001 to 1.0)");
 		panel.add(label);
 
 		fieldMessage = new JTextField(12);
 		panel.add(fieldMessage);
 
-		buttonSubmit = new JButton("Submit");
-		panel.add(buttonSubmit);
-		buttonSubmit.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				String message = fieldMessage.getText();
-
-				fieldMessage.setText("");
-				textArea.append(message + "\n");
-
-			}
-		});
+		/*
+		 * buttonSubmit = new JButton("Submit"); panel.add(buttonSubmit);
+		 * buttonSubmit.addActionListener(new ActionListener() {
+		 * 
+		 * @Override public void actionPerformed(ActionEvent e) { String message
+		 * = fieldMessage.getText();
+		 * 
+		 * 
+		 * 
+		 * } });
+		 */
 
 		textArea = new JTextArea();
 		textArea.setEditable(true);
@@ -66,12 +66,17 @@ public class CSVgenerator extends JFrame {
 		scrollPane.setPreferredSize(new Dimension(350, 90));
 		panel.add(scrollPane);
 
+		JLabel label2 = new JLabel("Enter Quote (eg. THB/USD)");
+		panel.add(label2);
+
 		buttonClear = new JButton("Clear");
 		buttonClear.addActionListener(new ActionListener() {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				textArea.setText("");
+				fieldMessage.setText("");
+				textArea1.setText("");
 
 			}
 		});
@@ -97,14 +102,35 @@ public class CSVgenerator extends JFrame {
 					UUID uid = UUID
 							.fromString("38400000-8cf0-11bd-b23e-10b96e4ef00d");
 
-					for (String i : tokens) {
+					for (String quote : tokens) {
 
-						System.out.println(uid.randomUUID());
-						dataList.add(new DataSheet(uid.randomUUID().toString(),
-								i));
+						if (!format(quote)) {
+							System.out.println(quote + " Wrong format");
+							JOptionPane
+									.showMessageDialog(
+											null,
+											" Please insert "
+													+ quote
+													+ "  again With Quote Format : XXX/YYY",
+											"Wrong Quote Format",
+											JOptionPane.ERROR_MESSAGE);
+
+						}
 
 					}
 
+					if (checkTick(fieldMessage.getText())) {
+						for (String quote : tokens) {
+							if (format(quote)) {
+								System.out.println(uid.randomUUID() + quote);
+								dataList.add(new DataSheet(uid.randomUUID()
+										.toString(), quote));
+								textArea1.append(quote
+										+ "       has been created" + "\n");
+
+							}
+						}
+					}
 					FileWriter fileWriter = new FileWriter(
 							"C:\\Users\\U6039459\\Desktop\\TRDA_Add_CCY\\import-inputdefinitionsme.csv");
 					fileWriter.append(FILE_HEADER);
@@ -141,12 +167,13 @@ public class CSVgenerator extends JFrame {
 								fileWriter.append(COMMA_DELIMETER);
 							}
 
-							fileWriter.append("0.01");
+							fileWriter.append(fieldMessage.getText());
 							fileWriter.append(COMMA_DELIMETER);
 
 							fileWriter.append("FALSE");
 
 							fileWriter.flush();
+
 						}
 
 					}
@@ -168,6 +195,55 @@ public class CSVgenerator extends JFrame {
 		});
 		panel.add(generateButton);
 
+		JLabel label3 = new JLabel("Result :                       ");
+		panel.add(label3);
+
+		textArea1 = new JTextArea();
+		textArea1.setEditable(false);
+
+		textArea1.setLineWrap(true);
+		textArea1.setWrapStyleWord(true);
+		// textArea.setPreferredSize(new Dimension(350,90));
+
+		JScrollPane scrollPane1 = new JScrollPane(textArea1);
+		scrollPane1.setPreferredSize(new Dimension(350, 90));
+		panel.add(scrollPane1);
+
+	}
+
+	public boolean format(String str) {
+
+		str.trim();
+		if (str.matches("[A-Z][A-Z][A-Z][/][A-Z][A-Z][A-Z]")
+				&& str.length() == 7) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	public boolean checkTick(String str) {
+		boolean result = true;
+		str.trim();
+
+		try {
+			double ticksize = Double.parseDouble(str);
+			if (ticksize > 0.000001 && ticksize <= 1.000000 && str != "") {
+				result = true;
+			} else {
+				JOptionPane.showMessageDialog(null,
+						" Please check tick size format",
+						"Wrong Tick Size Format", JOptionPane.ERROR_MESSAGE);
+				result = false;
+			}
+
+		} catch (Exception e) {
+			JOptionPane.showMessageDialog(null,
+					" Please check tick size format", "Wrong Tick Size Format",
+					JOptionPane.ERROR_MESSAGE);
+			result = false;
+		}
+		return result;
 	}
 
 	public static void main(String[] args) throws IOException {
